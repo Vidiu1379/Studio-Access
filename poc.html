@@ -1,0 +1,401 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>body{margin:0;font-size:14px}[hidden]{display:none!important}img{max-width:100%}</style>
+<title>Studio Isolation POC</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;600;700&display=swap">
+<style>
+/* Layout: presenter script bar on top, then a mock partner portal (context bar, tabs, content). One column; tables scroll in place. */
+:root{
+  --bg:#f3f6f6; --surface:#ffffff; --surface-2:#eaf0ef; --line:#d4dcdb;
+  --fg:#13201f; --muted:#56676a; --accent:#0e7a6e; --accent-fg:#ffffff; --accent-soft:#d9eeea;
+  --danger:#b3261e; --danger-bg:#fbe6e4; --warn:#8a5a00; --warn-bg:#fbefd6; --ok:#1f7a3f; --ok-bg:#e1f2e6;
+  --script:#16302d; --script-fg:#e8f3f1; --script-muted:#9fbab6;
+  --f-display:"Space Grotesk",system-ui,sans-serif; --f-body:"Inter",system-ui,sans-serif; --f-mono:"JetBrains Mono",ui-monospace,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0e1514; --surface:#151e1d; --surface-2:#1b2625; --line:#2a3836;
+  --fg:#e4eeec; --muted:#93a6a3; --accent:#4cc3b3; --accent-fg:#06201c; --accent-soft:#16312d;
+  --danger:#ff8a80; --danger-bg:#3a1c1a; --warn:#f2c46b; --warn-bg:#352812; --ok:#7fd69c; --ok-bg:#163020;
+  --script:#0a2421; --script-fg:#e8f3f1; --script-muted:#8fb0ab; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0e1514; --surface:#151e1d; --surface-2:#1b2625; --line:#2a3836;
+  --fg:#e4eeec; --muted:#93a6a3; --accent:#4cc3b3; --accent-fg:#06201c; --accent-soft:#16312d;
+  --danger:#ff8a80; --danger-bg:#3a1c1a; --warn:#f2c46b; --warn-bg:#352812; --ok:#7fd69c; --ok-bg:#163020;
+  --script:#0a2421; --script-fg:#e8f3f1; --script-muted:#8fb0ab; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:14.5px;line-height:1.5}
+.wrap{max-width:1180px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+button,select,input{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.mono{font-family:var(--f-mono);font-size:.82em}
+.muted{color:var(--muted)}
+
+/* Script bar */
+.script{background:var(--script);color:var(--script-fg)}
+.script .wrap{padding-block:14px;display:grid;gap:10px}
+.srow{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center}
+.slabel{font-family:var(--f-mono);font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;color:var(--script-muted)}
+.steps{display:flex;gap:6px;flex-wrap:wrap}
+.steps button{width:30px;height:30px;border-radius:50%;border:1px solid var(--script-muted);background:transparent;color:var(--script-fg);cursor:pointer;font-family:var(--f-mono);font-size:.8rem}
+.steps button[aria-current="step"]{background:var(--script-fg);color:var(--script);border-color:var(--script-fg)}
+.snav{margin-left:auto;display:flex;gap:6px}
+.snav button{border:1px solid var(--script-muted);background:transparent;color:var(--script-fg);border-radius:4px;padding:4px 10px;cursor:pointer;font-size:.85rem}
+.stitle{font-family:var(--f-display);font-size:1.15rem;font-weight:600;margin:0}
+.ssay{margin:0;max-width:85ch;color:var(--script-fg)}
+.sdo{margin:0;font-size:.88rem;color:var(--script-muted)}
+.sdo b{color:var(--script-fg);font-weight:500}
+
+/* Portal */
+.portal{padding-block:18px 48px;display:grid;gap:14px}
+.brand{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px}
+.brand h1{font-family:var(--f-display);font-size:1.25rem;margin:0}
+.badge{font-family:var(--f-mono);font-size:.7rem;padding:2px 7px;border-radius:3px;background:var(--surface-2);color:var(--muted);border:1px solid var(--line)}
+.brand .reset{margin-left:auto}
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:5px;padding:6px 12px;cursor:pointer}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
+.btn.sm{padding:3px 9px;font-size:.82rem}
+.ctx{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:12px 14px;display:flex;flex-wrap:wrap;gap:12px 22px;align-items:center}
+.field{display:grid;gap:3px}
+.field label,.k{font-family:var(--f-mono);font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+select,input[type=text]{background:var(--surface);border:1px solid var(--line);border-radius:5px;padding:6px 8px;max-width:100%}
+.switch{display:flex;align-items:center;gap:10px;cursor:pointer;border:0;background:transparent;padding:0}
+.track{width:42px;height:24px;border-radius:12px;background:var(--line);position:relative;transition:background .2s;flex:none}
+.track::after{content:"";position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:var(--surface);transition:transform .2s}
+.switch[aria-checked="true"] .track{background:var(--accent)}
+.switch[aria-checked="true"] .track::after{transform:translateX(18px)}
+.sw-text{text-align:left;display:grid}
+.sw-text b{font-weight:600}
+.scope{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.chip{font-size:.8rem;padding:2px 9px;border-radius:999px;background:var(--accent-soft);color:var(--accent);font-weight:500}
+.chip.leak{background:var(--danger-bg);color:var(--danger)}
+.bg{display:flex;flex-wrap:wrap;gap:8px;align-items:end}
+.bg input{width:220px}
+.bg-on{display:flex;gap:8px;align-items:center;flex-wrap:wrap;background:var(--warn-bg);color:var(--warn);border-radius:5px;padding:6px 10px;font-size:.88rem}
+.banner{border-radius:6px;padding:10px 14px;font-size:.9rem;display:flex;gap:10px;align-items:flex-start}
+.banner.off{background:var(--danger-bg);color:var(--danger)}
+.banner.on{background:var(--ok-bg);color:var(--ok)}
+.banner strong{font-weight:600}
+nav.tabs{display:flex;gap:2px;border-bottom:1px solid var(--line);overflow-x:auto;scrollbar-width:none}
+nav.tabs button{border:0;background:transparent;padding:9px 14px;cursor:pointer;color:var(--muted);border-bottom:2px solid transparent;font-family:var(--f-display);font-weight:500;white-space:nowrap}
+nav.tabs button[aria-selected="true"]{color:var(--accent);border-bottom-color:var(--accent)}
+.view{display:grid;gap:14px;min-width:0}
+h2{font-family:var(--f-display);font-size:1.1rem;margin:0}
+.vhead{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:baseline;justify-content:space-between}
+.tbl{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:8px}
+table{border-collapse:collapse;width:100%;font-size:.88rem}
+th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-family:var(--f-mono);font-weight:500;font-size:.68rem;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);background:var(--surface-2);white-space:nowrap}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+tr:last-child td{border-bottom:0}
+tr.leakrow td{background:var(--danger-bg)}
+tr.leakrow td:first-child{box-shadow:inset 3px 0 0 var(--danger)}
+.tag{font-family:var(--f-mono);font-size:.68rem;padding:1px 6px;border-radius:3px;white-space:nowrap}
+.t-allowed{background:var(--ok-bg);color:var(--ok)}
+.t-denied{background:var(--danger-bg);color:var(--danger)}
+.t-flag{background:var(--warn-bg);color:var(--warn)}
+.t-leak{background:var(--danger);color:var(--surface)}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,240px),1fr));gap:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:14px;display:grid;gap:6px;min-width:0}
+.card.leak{border-color:var(--danger)}
+.card h3{font-family:var(--f-display);font-size:1rem;margin:0}
+.card .row{display:flex;justify-content:space-between;gap:8px;font-size:.85rem}
+.lock{background:var(--surface);border:1px dashed var(--line);border-radius:8px;padding:28px;text-align:center;color:var(--muted);display:grid;gap:6px;justify-items:center}
+.lock strong{color:var(--fg);font-family:var(--f-display);font-size:1.02rem}
+.probe{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:14px;display:grid;gap:10px}
+.probe .line{display:flex;gap:8px;flex-wrap:wrap;align-items:end}
+.probe input{width:180px;font-family:var(--f-mono)}
+.result{border-radius:6px;padding:10px 12px;font-size:.9rem}
+.result.ok{background:var(--ok-bg);color:var(--ok)}
+.result.no{background:var(--danger-bg);color:var(--danger)}
+.result.warn{background:var(--warn-bg);color:var(--warn)}
+.filters{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.fbtn{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:3px 11px;cursor:pointer;font-size:.82rem}
+.fbtn[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+textarea{width:100%;min-height:120px;font-family:var(--f-mono);font-size:.78rem;background:var(--surface);color:var(--fg);border:1px solid var(--line);border-radius:6px;padding:8px}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:9px 16px;border-radius:6px;font-size:.88rem;max-width:calc(100% - 32px);opacity:0;pointer-events:none;transition:opacity .2s}
+.toast.show{opacity:1}
+.foot{font-size:.8rem;color:var(--muted)}
+.new{animation:flash 1.6s ease-out}
+@keyframes flash{from{background:var(--accent-soft)}to{background:transparent}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<a href="index.html" style="position:fixed;right:12px;bottom:12px;z-index:50;font:13px system-ui,sans-serif;background:#13201f;color:#fff;padding:6px 10px;border-radius:5px;text-decoration:none;opacity:.85">All pages</a>
+
+<div class="script" aria-label="Presenter script">
+  <div class="wrap">
+    <div class="srow">
+      <span class="slabel">Presenter script</span>
+      <div class="steps" id="steps"></div>
+      <div class="snav"><button type="button" id="sPrev">Back</button><button type="button" id="sNext">Next step</button></div>
+    </div>
+    <p class="stitle" id="sTitle"></p>
+    <p class="ssay" id="sSay"></p>
+    <p class="sdo" id="sDo"></p>
+  </div>
+</div>
+
+<div class="wrap portal">
+  <div class="brand">
+    <h1>Partner Portal</h1>
+    <span class="badge">POC · sample data</span>
+    <button class="btn sm reset" type="button" id="resetBtn">Reset demo</button>
+  </div>
+
+  <div class="ctx">
+    <div class="field">
+      <label for="persona">Signed in as</label>
+      <select id="persona"></select>
+    </div>
+    <button class="switch" type="button" role="switch" id="isoSw" aria-checked="false">
+      <span class="track"></span>
+      <span class="sw-text"><span class="k">Tenant isolation</span><b id="isoTxt">Off · today</b></span>
+    </button>
+    <div class="field" style="min-width:0">
+      <span class="k">Data this user can see</span>
+      <div class="scope" id="scope"></div>
+    </div>
+    <div id="bgBox"></div>
+  </div>
+
+  <div id="banner"></div>
+
+  <nav class="tabs" role="tablist" id="tabs">
+    <button role="tab" type="button" data-tab="games">Games</button>
+    <button role="tab" type="button" data-tab="report">Performance report</button>
+    <button role="tab" type="button" data-tab="math">Math models</button>
+    <button role="tab" type="button" data-tab="audit">Access audit</button>
+  </nav>
+
+  <div class="view" id="view" role="tabpanel"></div>
+
+  <p class="foot">Sample data. Studio names, people and figures are fictional and exist only to demonstrate the access model.</p>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const S={nw:'Northwind Games',au:'Aurora Spin',ks:'Kestrel Labs'};
+const P={
+  au_admin:{name:'Daniel Ionescu',org:'au',type:'studio',role:'Studio admin'},
+  au_viewer:{name:'Elena Mureș',org:'au',type:'studio',role:'Commercial viewer'},
+  nw_admin:{name:'Maria Pop',org:'nw',type:'studio',role:'Studio admin'},
+  ks_admin:{name:'Tom Becker',org:'ks',type:'studio',role:'Studio admin'},
+  am:{name:'Andrei Vlad',org:'platform',type:'internal',role:'Account manager',assigned:['nw','au']},
+  comp:{name:'Ioana Rusu',org:'platform',type:'internal',role:'Compliance'}
+};
+const plabel=k=>{const p=P[k];return `${p.name} · ${p.org==='platform'?'Platform':S[p.org]} · ${p.role}${k==='ks_admin'?' (new studio)':''}`};
+const G=[
+  {s:'nw',name:'Frostbite Fortune',rounds:8.2e6,ggr:412300,rt:96.10,ra:95.84,mm:'MM-NW-01',file:'frostbite-fortune_math_v3.2.xlsx'},
+  {s:'nw',name:'Viking Vault',rounds:5.1e6,ggr:288900,rt:96.00,ra:96.37,mm:'MM-NW-02',file:'viking-vault_math_v2.0.xlsx'},
+  {s:'nw',name:'Polar Pays',rounds:3.6e6,ggr:174200,rt:95.50,ra:95.21,mm:'MM-NW-03',file:'polar-pays_math_v1.4.xlsx'},
+  {s:'au',name:'Solar Spins',rounds:10.4e6,ggr:536700,rt:96.30,ra:96.02,mm:'MM-AU-01',file:'solar-spins_par_v5.1.xlsx'},
+  {s:'au',name:'Nebula Nights',rounds:6.0e6,ggr:301500,rt:95.80,ra:96.08,mm:'MM-AU-02',file:'nebula-nights_par_v2.3.xlsx'},
+  {s:'au',name:'Comet Cash',rounds:2.9e6,ggr:122800,rt:96.50,ra:96.71,mm:'MM-AU-03',file:'comet-cash_par_v1.0.xlsx'},
+  {s:'ks',name:'Raptor Reels',rounds:1.7e6,ggr:98400,rt:96.20,ra:95.93,mm:'MM-KS-01',file:'raptor-reels_model_v1.1.xlsx'},
+  {s:'ks',name:'Talon Treasures',rounds:1.1e6,ggr:64100,rt:95.90,ra:96.04,mm:'MM-KS-02',file:'talon-treasures_model_v1.0.xlsx'}
+];
+const eur=n=>'€'+Math.round(n).toLocaleString('en-GB');
+const mil=n=>(n/1e6).toFixed(1)+'M';
+const when=d=>d.toLocaleString('en-GB',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});
+
+function seed(){return [
+  ['2026-11-09T09:12','nw_admin','Viewed performance report','Oct 2026 report','nw','Allowed'],
+  ['2026-11-09T10:40','am','Viewed performance report','Oct 2026 report','nw','Allowed'],
+  ['2026-11-09T10:41','am','Viewed performance report','Oct 2026 report','au','Allowed'],
+  ['2026-11-09T13:05','au_admin','Downloaded math model','MM-AU-01','au','Allowed'],
+  ['2026-11-09T15:22','ks_admin','Viewed performance report','Oct 2026 report','ks','Allowed'],
+  ['2026-11-09T15:30','ks_admin','Downloaded math model','MM-KS-02','ks','Allowed']
+].map(([t,a,action,asset,studio,result])=>({t:new Date(t),actor:a,action,asset,studio,result,flag:'',seed:true})).reverse()}
+
+let st;
+function fresh(){st={persona:'au_admin',iso:false,tab:'report',bg:'',probe:'',probeRes:null,events:seed(),filter:'All',csv:'',step:0,newIds:new Set()}}
+fresh();
+
+function access(k,studio,kind){
+  const p=P[k];
+  if(!st.iso)return{ok:true};
+  if(p.type==='studio'){
+    if(p.org!==studio)return{ok:false,why:'Asset belongs to another studio'};
+    if(kind==='math'&&p.role==='Commercial viewer')return{ok:false,why:'Role "Commercial viewer" cannot open math models'};
+    return{ok:true};
+  }
+  if(p.role==='Account manager')return p.assigned.includes(studio)?{ok:true}:{ok:false,why:'Not assigned to this studio'};
+  if(p.role==='Compliance')return st.bg?{ok:true,flag:'Break-glass: '+st.bg}:{ok:false,why:'Break-glass access required'};
+  return{ok:false,why:'No access'};
+}
+const seen=kind=>Object.keys(S).filter(s=>access(st.persona,s,kind).ok);
+let eid=0;
+function log(action,asset,studio,result,flag=''){
+  if(!st.iso)return;
+  const e={t:new Date(),actor:st.persona,action,asset,studio,result,flag,id:++eid};
+  st.events.unshift(e);st.newIds.add(e.id);
+}
+
+/* Context */
+const personaSel=document.getElementById('persona');
+personaSel.innerHTML=Object.keys(P).map(k=>`<option value="${k}">${esc(plabel(k))}</option>`).join('');
+personaSel.addEventListener('change',()=>{st.persona=personaSel.value;st.bg='';st.probeRes=null;enter(st.tab)});
+const isoSw=document.getElementById('isoSw');
+isoSw.addEventListener('click',()=>{st.iso=!st.iso;st.probeRes=null;enter(st.tab);toast(st.iso?'Tenant isolation on':'Tenant isolation off: today\'s behaviour')});
+document.getElementById('tabs').addEventListener('click',e=>{const b=e.target.closest('[data-tab]');if(b){st.probeRes=null;enter(b.dataset.tab)}});
+document.getElementById('resetBtn').addEventListener('click',()=>{fresh();applyStep(0);toast('Demo reset')});
+
+function renderCtx(){
+  const p=P[st.persona];
+  personaSel.value=st.persona;
+  isoSw.setAttribute('aria-checked',st.iso);
+  document.getElementById('isoTxt').textContent=st.iso?'On · proposed':'Off · today';
+  const vis=seen('view');
+  document.getElementById('scope').innerHTML=vis.length?vis.map(s=>`<span class="chip${p.type==='studio'&&s!==p.org?' leak':''}">${esc(S[s])}</span>`).join(''):'<span class="muted">None</span>';
+  const bg=document.getElementById('bgBox');
+  if(st.persona==='comp'&&st.iso){
+    bg.innerHTML=st.bg?`<div class="bg-on"><span><strong>Break-glass active</strong> · ${esc(st.bg)}</span><button class="btn sm" type="button" id="bgEnd">End</button></div>`
+      :`<form class="bg" id="bgForm"><div class="field"><label for="bgReason">Break-glass reason</label><input type="text" id="bgReason" placeholder="e.g. Regulator request REG-2211"></div><button class="btn sm primary" type="submit">Start break-glass</button></form>`;
+  }else bg.innerHTML='';
+  document.getElementById('banner').innerHTML=st.iso
+    ?`<div class="banner on"><span><strong>Isolation on.</strong> Access is checked by studio and role on the server, and every access is written to the owning studio's audit log.</span></div>`
+    :`<div class="banner off"><span><strong>Isolation off. This is today's behaviour.</strong> Every partner sees every studio's data and nothing is logged.</span></div>`;
+  document.querySelectorAll('#tabs [data-tab]').forEach(b=>b.setAttribute('aria-selected',b.dataset.tab===st.tab));
+}
+document.getElementById('bgBox').addEventListener('submit',e=>{e.preventDefault();const r=document.getElementById('bgReason').value.trim();if(!r){toast('Enter a reason to start break-glass');return}st.bg=r;Object.keys(S).forEach(s=>log('Started break-glass session','All assets',s,'Allowed','Break-glass: '+r));toast('Break-glass started. Every studio is notified in its audit log.');enter(st.tab)});
+document.getElementById('bgBox').addEventListener('click',e=>{if(e.target.id==='bgEnd'){st.bg='';toast('Break-glass ended');render()}});
+
+/* Tab entry logs the access, like a real page load would */
+function enter(tab){
+  st.tab=tab;
+  if(st.iso){
+    if(tab==='report')seen('view').forEach(s=>{const a=access(st.persona,s,'view');log('Viewed performance report','Oct 2026 report',s,'Allowed',a.flag||'')});
+    if(tab==='math'&&P[st.persona].role==='Commercial viewer')log('Opened math models','Math model library',P[st.persona].org,'Denied');
+  }
+  render();
+}
+
+/* Views */
+const isLeak=s=>P[st.persona].type==='studio'&&s!==P[st.persona].org;
+function vGames(){
+  const vis=seen('view');
+  if(!vis.length)return lockBox('No studios in scope','Start a break-glass session to access studio data.');
+  return `<div class="vhead"><h2>Games</h2><span class="muted">${vis.length} studio${vis.length>1?'s':''} in scope</span></div>
+  <div class="cards">${G.filter(g=>vis.includes(g.s)).map(g=>`<div class="card${isLeak(g.s)?' leak':''}">
+    <div class="row"><span class="muted">${esc(S[g.s])}</span>${isLeak(g.s)?'<span class="tag t-leak">Competitor</span>':''}</div>
+    <h3>${esc(g.name)}</h3>
+    <div class="row"><span class="muted">Theoretical RTP</span><span>${g.rt.toFixed(2)}%</span></div>
+    <div class="row"><span class="muted">Oct GGR</span><span>${eur(g.ggr)}</span></div></div>`).join('')}</div>`;
+}
+function vReport(){
+  const vis=seen('view');
+  if(!vis.length)return lockBox('Break-glass access required','Compliance has no standing access to studio data. Start a break-glass session with a reason.');
+  const rows=G.filter(g=>vis.includes(g.s));
+  const leaks=rows.filter(g=>isLeak(g.s)).length;
+  const tot=rows.reduce((a,g)=>({r:a.r+g.rounds,g:a.g+g.ggr}),{r:0,g:0});
+  return `<div class="vhead"><h2>Monthly performance report · October 2026</h2><span class="muted">${rows.length} games</span></div>
+  ${leaks?`<div class="result no"><strong>${leaks} rows belong to other studios.</strong> This is the shared report two studios complained about.</div>`:''}
+  <div class="tbl"><table><thead><tr><th>Studio</th><th>Game</th><th class="num">Rounds</th><th class="num">GGR</th><th class="num">RTP theo.</th><th class="num">RTP actual</th></tr></thead><tbody>
+  ${rows.map(g=>`<tr class="${isLeak(g.s)?'leakrow':''}"><td>${esc(S[g.s])}${isLeak(g.s)?' <span class="tag t-leak">Competitor</span>':''}</td><td>${esc(g.name)}</td><td class="num">${mil(g.rounds)}</td><td class="num">${eur(g.ggr)}</td><td class="num">${g.rt.toFixed(2)}%</td><td class="num">${g.ra.toFixed(2)}%</td></tr>`).join('')}
+  <tr><td colspan="2"><strong>Total</strong></td><td class="num"><strong>${mil(tot.r)}</strong></td><td class="num"><strong>${eur(tot.g)}</strong></td><td></td><td></td></tr>
+  </tbody></table></div>`;
+}
+function vMath(){
+  const p=P[st.persona];
+  let list;
+  if(st.iso&&p.role==='Commercial viewer')list=lockBox('Your role can\'t open math models','Commercial viewers see performance data only. Ask your studio admin for the Math role. This attempt was logged.');
+  else{
+    const vis=seen('math');
+    list=vis.length?`<div class="tbl"><table><thead><tr><th>Asset ID</th><th>Studio</th><th>Game</th><th>File</th><th></th></tr></thead><tbody>
+    ${G.filter(g=>vis.includes(g.s)).map(g=>`<tr class="${isLeak(g.s)?'leakrow':''}"><td class="mono">${g.mm}</td><td>${esc(S[g.s])}${isLeak(g.s)?' <span class="tag t-leak">Competitor</span>':''}</td><td>${esc(g.name)}</td><td class="mono">${esc(g.file)}</td><td><button class="btn sm" type="button" data-dl="${g.mm}">Download</button></td></tr>`).join('')}
+    </tbody></table></div>`:lockBox('Break-glass access required','Compliance has no standing access to math models.');
+  }
+  const r=st.probeRes;
+  return `<div class="vhead"><h2>Math models</h2><span class="muted">PAR sheets and certified models</span></div>${list}
+  <form class="probe" id="probe"><div class="line"><div class="field"><label for="probeId">Open an asset by ID</label><input type="text" id="probeId" value="${esc(st.probe)}" placeholder="MM-KS-01"></div><button class="btn primary" type="submit">Open</button></div>
+  <span class="muted" style="font-size:.85rem">Simulates someone pasting a link or guessing an ID for an asset they shouldn't see.</span>
+  ${r?`<div class="result ${r.cls}">${r.html}</div>`:''}</form>`;
+}
+function vAudit(){
+  const p=P[st.persona];
+  if(!st.iso)return lockBox('No access audit exists today','Nothing records who opened which studio\'s data. Turn on tenant isolation to see the proposed audit trail.');
+  let ev,scope;
+  if(p.type==='studio'){
+    if(p.role!=='Studio admin')return lockBox('Only studio admins can view the audit log','Ask your studio admin for access.');
+    ev=st.events.filter(e=>e.studio===p.org);scope=`All access to ${S[p.org]} assets`;
+  }else if(p.role==='Compliance'&&st.bg){ev=st.events;scope='All studios (break-glass)';}
+  else{ev=st.events.filter(e=>e.actor===st.persona);scope='Your own activity';}
+  const f=st.filter;
+  const shown=ev.filter(e=>f==='All'||(f==='Denied'&&e.result==='Denied')||(f==='Flagged'&&e.flag)||(f==='Internal'&&P[e.actor].type==='internal'));
+  const actor=e=>{const a=P[e.actor];if(p.type==='studio'&&a.type==='studio'&&a.org!==p.org)return '<span class="muted">User at another partner (identity withheld)</span>';return `${esc(a.name)} <span class="muted">· ${a.org==='platform'?'Platform':esc(S[a.org])} · ${esc(a.role)}</span>`};
+  st.csv=['Time,Actor,Action,Asset,Studio,Result,Flag'].concat(shown.map(e=>{const a=P[e.actor];const who=(p.type==='studio'&&a.type==='studio'&&a.org!==p.org)?'Another partner (withheld)':`${a.name} (${a.role})`;return [e.t.toISOString(),who,e.action,e.asset,S[e.studio],e.result,e.flag].map(x=>`"${String(x).replace(/"/g,'""')}"`).join(',')})).join('\n');
+  const html=`<div class="vhead"><h2>Access audit</h2><span class="muted">${esc(scope)} · ${shown.length} of ${ev.length} events</span></div>
+  <div class="filters">${['All','Denied','Flagged','Internal'].map(x=>`<button class="fbtn" type="button" data-f="${x}" aria-pressed="${x===f}">${x}</button>`).join('')}
+  <button class="btn sm" type="button" id="copyCsv" style="margin-left:auto">Copy as CSV</button></div>
+  <div class="tbl"><table><thead><tr><th>Time</th><th>Who</th><th>Action</th><th>Asset</th><th>Studio</th><th>Result</th></tr></thead><tbody>
+  ${shown.length?shown.map(e=>`<tr class="${st.newIds.has(e.id)?'new':''}"><td class="mono" style="white-space:nowrap">${when(e.t)}</td><td>${actor(e)}</td><td>${esc(e.action)}</td><td class="mono">${esc(e.asset)}</td><td>${esc(S[e.studio])}</td><td><span class="tag ${e.result==='Denied'?'t-denied':'t-allowed'}">${e.result}</span>${e.flag?` <span class="tag t-flag">${esc(e.flag)}</span>`:''}</td></tr>`).join(''):'<tr><td colspan="6" class="muted" style="text-align:center;padding:20px">No events match this filter.</td></tr>'}
+  </tbody></table></div><div id="csvBox"></div>`;
+  return html;
+}
+function lockBox(t,d){return `<div class="lock"><strong>${esc(t)}</strong><span>${esc(d)}</span></div>`}
+
+const view=document.getElementById('view');
+function render(){
+  renderCtx();
+  view.innerHTML=({games:vGames,report:vReport,math:vMath,audit:vAudit})[st.tab]();
+  st.newIds=new Set();
+}
+view.addEventListener('click',e=>{
+  const dl=e.target.closest('[data-dl]');
+  if(dl){const g=G.find(x=>x.mm===dl.dataset.dl);const a=access(st.persona,g.s,'math');log('Downloaded math model',g.mm,g.s,'Allowed',a.flag||'');toast(st.iso?`${g.mm} download recorded in ${S[g.s]}'s audit log`:`${g.mm} downloaded. No record kept.`);return}
+  const fb=e.target.closest('[data-f]');if(fb){st.filter=fb.dataset.f;render();return}
+  if(e.target.id==='copyCsv'){const csv=st.csv;const fallback=()=>{document.getElementById('csvBox').innerHTML=`<textarea id="csvText" readonly aria-label="Audit CSV">${esc(csv)}</textarea>`;const t=document.getElementById('csvText');t.focus();t.select();toast('Copy blocked here. Text selected, press Ctrl/Cmd+C.')};
+    try{navigator.clipboard.writeText(csv).then(()=>toast('Audit log copied as CSV'),fallback)}catch(err){fallback()}}
+});
+view.addEventListener('submit',e=>{
+  if(e.target.id!=='probe')return;e.preventDefault();
+  const id=document.getElementById('probeId').value.trim().toUpperCase();st.probe=id;
+  const g=G.find(x=>x.mm===id);
+  if(!g){st.probeRes={cls:'warn',html:`No asset with ID <span class="mono">${esc(id||'(empty)')}</span>. Try MM-NW-01, MM-AU-02 or MM-KS-01.`};render();return}
+  const a=access(st.persona,g.s,'math');
+  if(!st.iso)st.probeRes={cls:'no',html:`<strong>Opened ${esc(g.file)}</strong> (${esc(S[g.s])}). No check, no record. Anyone with the ID gets the file.`};
+  else if(a.ok){log('Opened math model',g.mm,g.s,'Allowed',a.flag||'');st.probeRes={cls:'ok',html:`<strong>Opened ${esc(g.file)}.</strong> Recorded in ${esc(S[g.s])}'s audit log${a.flag?' and flagged as break-glass':''}.`}}
+  else{log('Tried to open math model',g.mm,g.s,'Denied');st.probeRes={cls:'no',html:`<strong>Access denied (403).</strong> ${esc(a.why)}. The attempt is recorded in ${esc(S[g.s])}'s audit log.`}}
+  render();
+});
+
+let tt;function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('show'),2600)}
+
+/* Presenter script */
+const STEPS=[
+ {t:'Today: the incident',set:{persona:'au_admin',iso:false,tab:'report'},say:'This is the shared October report as Aurora Spin sees it today. Northwind and Kestrel names and figures are visible. This is what two studios raised.',do:'Point at the red rows. Then open <b>Math models</b>: competitor PAR sheets are one click away.'},
+ {t:'Turn isolation on',set:{persona:'au_admin',iso:true,tab:'report'},say:'Same user, same report. With tenant isolation, Aurora sees only its own games. Filtering happens in the data layer, so exports and APIs get the same rule.',do:'Toggle isolation off and on to show the difference.'},
+ {t:'Least privilege inside a studio',set:{persona:'au_viewer',iso:true,tab:'math'},say:'Elena is Aurora\'s commercial viewer. She sees performance data but not math models. The attempt is logged.',do:'Open <b>Performance report</b> to show she still has what she needs.'},
+ {t:'Someone tries another studio\'s model',set:{persona:'au_admin',iso:true,tab:'math',probe:'MM-KS-01'},say:'Daniel pastes an asset ID that belongs to Kestrel Labs. Access is denied and recorded against Kestrel\'s asset.',do:'Click <b>Open</b>. Then try <b>MM-AU-02</b> to show his own model opens.'},
+ {t:'Account manager scope',set:{persona:'am',iso:true,tab:'report'},say:'Andrei manages Northwind and Aurora. He sees both, not Kestrel. Each view he makes lands in that studio\'s audit log.',do:'Show the scope chips in the context bar.'},
+ {t:'Compliance break-glass',set:{persona:'comp',iso:true,tab:'math'},say:'Compliance has no standing access. When there\'s a justified need, access is opened with a reason and flagged to every studio.',do:'Enter a reason, click <b>Start break-glass</b>, then download a Kestrel model.'},
+ {t:'The access audit',set:{persona:'ks_admin',iso:true,tab:'audit'},say:'Kestrel\'s admin sees every access to Kestrel assets: who, what, when and the result. Attempts from other partners show without naming them. This is the audit the new studio asked for.',do:'Filter <b>Denied</b> and <b>Flagged</b>, then <b>Copy as CSV</b>.'},
+ {t:'Wrap-up and ask',set:{persona:'ks_admin',iso:true,tab:'audit'},say:'Phase 0 stops the shared report now. Phase 1 delivers isolation. Phase 2 delivers this audit. We need decisions on the isolation model, the audit definition and timing for the new studio.',do:'Hand over to the decision log (D2, D5, D7).'}
+];
+const stepsEl=document.getElementById('steps');
+stepsEl.innerHTML=STEPS.map((s,i)=>`<button type="button" data-s="${i}" aria-label="Step ${i+1}: ${esc(s.t)}" title="${esc(s.t)}">${i+1}</button>`).join('');
+stepsEl.addEventListener('click',e=>{const b=e.target.closest('[data-s]');if(b)applyStep(+b.dataset.s)});
+document.getElementById('sPrev').addEventListener('click',()=>applyStep(Math.max(0,st.step-1)));
+document.getElementById('sNext').addEventListener('click',()=>applyStep(Math.min(STEPS.length-1,st.step+1)));
+function applyStep(i){
+  const s=STEPS[i];st.step=i;
+  if(s.set.persona!==st.persona)st.bg='';
+  st.persona=s.set.persona;st.iso=s.set.iso;st.probe=s.set.probe||'';st.probeRes=null;st.filter='All';
+  document.getElementById('sTitle').textContent=`${i+1}. ${s.t}`;
+  document.getElementById('sSay').textContent=s.say;
+  document.getElementById('sDo').innerHTML='Do: '+s.do;
+  stepsEl.querySelectorAll('button').forEach((b,j)=>j===i?b.setAttribute('aria-current','step'):b.removeAttribute('aria-current'));
+  document.getElementById('sNext').disabled=i===STEPS.length-1;document.getElementById('sPrev').disabled=i===0;
+  enter(s.set.tab);
+}
+applyStep(0);
+</script>
+</body></html>
