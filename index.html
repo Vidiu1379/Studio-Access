@@ -1,27 +1,399 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
+<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Studio Content Access</title>
+<title>Challenge 7: Every Partner's Vault</title>
 <style>
-:root{--bg:#f4f6f8;--fg:#161a26;--muted:#5a6175;--line:#d9dde8;--card:#fff;--accent:#2b47b5}
-@media (prefers-color-scheme:dark){:root{--bg:#10131b;--fg:#e7e9f0;--muted:#9aa1b5;--line:#2c3344;--card:#171b26;--accent:#8ea2ff;color-scheme:dark}}
-body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif}
-main{max-width:760px;margin:0 auto;padding:48px 16px;display:grid;gap:20px}
-h1{margin:0;font-size:1.6rem}
-p{margin:0;color:var(--muted)}
-a.card{display:block;background:var(--card);border:1px solid var(--line);border-radius:8px;padding:18px 20px;color:inherit;text-decoration:none}
-a.card:hover{border-color:var(--accent)}
-a.card strong{display:block;font-size:1.05rem;color:var(--accent);margin-bottom:4px}
+  :root { --ink: #0f1b2d; --ink2: #1b2b44; --navy: #0f1b2d; --blue: #3b82f6; --green: #16a34a; --red: #dc2626; --amber: #d97706; --bg: #f2f4f9; --card: #fff; --line: #e5e9f0; --text: #1c2733; --muted: #6b7a90; }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { margin: 0; font-family: Inter, -apple-system, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.5; }
+  button { font-family: inherit; }
+  .app { display: grid; grid-template-columns: 236px 1fr; min-height: 100vh; }
+  @media (max-width: 860px) { .app { grid-template-columns: 1fr; } .side { display: none; } }
+  .side { background: linear-gradient(180deg, var(--ink), #0b1424); color: #cbd5e3; position: sticky; top: 0; height: 100vh; padding: 20px 14px; display: flex; flex-direction: column; }
+  .logo { display: flex; align-items: center; gap: 10px; color: #fff; font-weight: 800; font-size: 18px; padding: 0 8px 22px; }
+  .logo svg { width: 26px; height: 26px; stroke: #60a5fa; }
+  .logo small { display: block; font-weight: 500; font-size: 10px; letter-spacing: .12em; color: #7f90a8; text-transform: uppercase; }
+  .nav-item { display: flex; align-items: center; gap: 12px; padding: 9px 12px; border-radius: 10px; color: inherit; text-decoration: none; font-size: 14px; transition: background .15s, color .15s; }
+  .nav-item:hover { background: rgba(255,255,255,.07); color: #fff; }
+  .nav-item.active { background: rgba(96,165,250,.16); color: #fff; font-weight: 600; }
+  .nav-item .dot { width: 8px; height: 8px; border-radius: 50%; background: #475a75; margin-left: auto; }
+  .nav-item.active .dot { background: #60a5fa; }
+  .nav-item.curve .dot { background: var(--red); }
+  .side .grow { flex: 1; }
+  .status-pill { background: rgba(255,255,255,.07); border-radius: 12px; padding: 12px; font-size: 12px; }
+  .status-pill b { display: block; color: #fff; font-size: 13px; margin-bottom: 2px; }
+  .main { min-width: 0; }
+  .bar-state { height: 4px; background: linear-gradient(90deg, var(--red), var(--amber), var(--green)); }
+  .topbar { background: rgba(255,255,255,.86); backdrop-filter: blur(8px); border-bottom: 1px solid var(--line); padding: 14px 28px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; position: sticky; top: 0; z-index: 5; }
+  .topbar .ttl { flex: 1; min-width: 220px; }
+  .topbar h1 { margin: 0; font-size: 20px; color: var(--ink); }
+  .topbar p { margin: 2px 0 0; color: var(--muted); font-size: 13px; }
+  .chip-cap { background: #e3edfd; color: var(--blue); font-weight: 700; font-size: 12px; padding: 5px 14px; border-radius: 20px; }
+  .chip-cap.over { background: #fde8e6; color: var(--red); }
+  .btn-link { background: var(--blue); color: #fff; border-radius: 10px; padding: 9px 16px; font-size: 13px; font-weight: 600; text-decoration: none; transition: all .15s; }
+  .btn-link:hover { filter: brightness(1.08); transform: translateY(-1px); }
+  .page { max-width: 1120px; margin: 0 auto; padding: 26px 28px 60px; }
+  .vision { display: block; background: linear-gradient(120deg, var(--ink), var(--ink2)); color: #fff; padding: 24px 28px; border-radius: 18px; font-size: 22px; font-weight: 700; line-height: 1.35; scroll-margin-top: 84px; }
+  .vision small { display: block; color: #8fb4e8; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .12em; margin-bottom: 8px; }
+  h2 { color: var(--ink); font-size: 18px; margin: 34px 0 12px; display: flex; align-items: center; gap: 10px; scroll-margin-top: 84px; }
+  h2::before { content: ""; width: 6px; height: 20px; border-radius: 3px; background: var(--blue); }
+  h2.curve::before { background: var(--red); }
+  .grid { display: grid; gap: 16px; }
+  .grid.three { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 20px; box-shadow: 0 1px 2px rgba(16,24,40,.04); }
+  .card h3 { margin: 0 0 8px; font-size: 16px; color: var(--ink); }
+  .card.blue { border-top: 5px solid var(--blue); }
+  .card.green { border-top: 5px solid var(--green); }
+  .card ul { margin: 6px 0 0; padding-left: 18px; }
+  .card li { margin: 4px 0; }
+  .sub { color: var(--muted); font-size: 13px; }
+  .tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+  .tab { border: 1px solid var(--line); background: #fff; color: var(--muted); border-radius: 20px; padding: 6px 16px; cursor: pointer; font-size: 13px; transition: all .15s; }
+  .tab:hover { color: var(--ink); }
+  .tab.active { background: var(--ink); color: #fff; border-color: var(--ink); }
+  .panel { display: none; }
+  .panel.active { display: block; animation: fade .3s; }
+  @keyframes fade { from { opacity: 0; transform: translateY(6px); } }
+  .panel .row { margin: 10px 0; }
+  .label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); }
+  .pill { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 11px; font-weight: 700; background: #e3edfd; color: var(--blue); margin-right: 4px; }
+  .pill.ok { background: #def3e6; color: var(--green); }
+  .pill.rev { background: #fdf0d5; color: var(--amber); }
+  table { width: 100%; border-collapse: collapse; background: var(--card); border: 1px solid var(--line); border-radius: 16px; overflow: hidden; font-size: 13px; box-shadow: 0 1px 2px rgba(16,24,40,.04); }
+  th, td { text-align: left; padding: 11px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .06em; font-weight: 700; background: #f8fafc; }
+  tbody tr:hover td { background: #f8fafc; }
+  .card table { box-shadow: none; }
+  .capacity { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 20px; box-shadow: 0 1px 2px rgba(16,24,40,.04); }
+  .bar { display: flex; height: 34px; border-radius: 10px; overflow: hidden; margin: 8px 0 12px; background: #eef2f7; }
+  .bar div { display: flex; align-items: center; justify-content: center; color: #fff; font-size: 13px; font-weight: 700; transition: width .3s; white-space: nowrap; overflow: hidden; }
+  .controls { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px 18px; margin-top: 12px; font-size: 14px; }
+  .controls input[type=range] { width: 100%; accent-color: var(--blue); }
+  .total { font-weight: 700; color: var(--ink); font-size: 16px; }
+  .total.over { color: var(--red); }
+  .check { display: flex; gap: 10px; align-items: flex-start; margin: 8px 0; font-size: 14px; }
+  .check input { accent-color: var(--green); margin-top: 3px; }
+  .progress { height: 10px; background: #eef2f7; border-radius: 6px; overflow: hidden; margin: 6px 0 12px; }
+  .progress div { height: 100%; background: var(--green); width: 0; transition: width .3s; }
+  .timeline { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 16px; }
+  .step { background: var(--card); border: 1px solid var(--line); border-top: 5px solid var(--blue); border-radius: 16px; padding: 16px 18px; font-size: 13px; transition: transform .15s, box-shadow .15s; }
+  .step:hover { transform: translateY(-3px); box-shadow: 0 10px 24px rgba(16,24,40,.1); }
+  .step.now { border-top-color: var(--green); }
+  .step.later { border-top-color: var(--amber); }
+  .step b { display: block; margin-bottom: 6px; color: var(--ink); font-size: 15px; }
+  [contenteditable]:focus { outline: 2px dashed var(--blue); outline-offset: 2px; }
+  .hint { color: var(--muted); font-size: 12px; margin-top: 24px; }
+  .dtag { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 11px; font-weight: 700; background: #e3edfd; color: var(--blue); white-space: nowrap; }
+  .dtag.curve { background: #fde8e6; color: var(--red); }
+  .story-link { color: var(--blue); cursor: pointer; text-decoration: underline dotted; font-weight: 600; }
+  .bar div[data-story] { cursor: pointer; } .bar div[data-story]:hover { filter: brightness(1.15); }
+  .modal-bg { position: fixed; inset: 0; background: rgba(10,18,32,.55); display: none; place-items: center; z-index: 50; padding: 20px; }
+  .modal-bg.show { display: grid; }
+  .modal { background: #fff; border-radius: 18px; max-width: 640px; width: 100%; max-height: 90vh; overflow: auto; padding: 24px; box-shadow: 0 20px 60px rgba(0,0,0,.35); animation: fade .2s; }
+  .modal h3 { margin: 0 0 4px; color: var(--ink); font-size: 18px; }
+  .modal table { margin-top: 12px; box-shadow: none; border-radius: 12px; }
+  .modal td.pts { width: 54px; text-align: right; font-weight: 800; color: var(--ink); }
+  .modal .foot { display: flex; justify-content: space-between; align-items: center; margin-top: 14px; gap: 12px; }
+  .modal button { background: var(--blue); color: #fff; border: 0; border-radius: 10px; padding: 9px 18px; font-weight: 600; cursor: pointer; }
+  @media print { .side, .topbar, .tabs, .controls, .hint { display: none; } .app { display: block; } .panel { display: block !important; } body { background: #fff; } }
 </style>
 </head>
 <body>
-<main>
-<h1>Studio Content Access &amp; IP Protection</h1>
-<p>Product workshop material. Sample data only; studio names, people and figures are fictional.</p>
-<a class="card" href="workshop.html"><strong>Workshop pack</strong>Overview, one-pager, PRD, decision log and backlog.</a>
-<a class="card" href="poc.html"><strong>Clickable POC</strong>Partner portal demo with an 8-step presenter script.</a>
-</main>
+<div class="app">
+  <aside class="side">
+    <div class="logo"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg><div>Vault<small>Challenge 7</small></div></div>
+    <nav id="nav"></nav>
+    <div class="grow"></div>
+    <div class="status-pill"><b id="sideCap"></b>of capacity planned</div>
+  </aside>
+  <div class="main">
+    <div class="bar-state"></div>
+    <div class="topbar">
+      <div class="ttl"><h1>Challenge 7: Every Partner's Vault</h1><p>Content access filtering and IP protection</p></div>
+      <span class="chip-cap" id="capChip"></span>
+      <a class="btn-link" href="poc-v2.html">Open the PoC</a>
+    </div>
+<div class="page">
+
+<div class="vision" id="top">
+  <small>Product outcome</small>
+  <span contenteditable="true">Every studio trusts that only it can see its own games, data and math models, and can prove it.</span>
+</div>
+
+<h2 id="why">Why now</h2>
+<div class="grid three">
+  <div class="card blue"><h3>Business brief</h3>
+    <ul contenteditable="true">
+      <li>2 studios raised concerns after seeing competitor names in a shared report.</li>
+      <li>IP protection is a top 3 reason studios choose an aggregator.</li>
+      <li>A new top studio will only sign with an access audit.</li>
+    </ul>
+  </div>
+  <div class="card green"><h3>Tech brief</h3>
+    <ul contenteditable="true">
+      <li>Permissions are set manually per account, using broad roles (admin, studio, operator).</li>
+      <li>Shared reporting is only partly filtered by studio.</li>
+      <li>Audit log: 3 pts. Role-based access rebuild: 8 pts.</li>
+      <li>Any access change needs a security review.</li>
+      <li>Capacity: 16 pts.</li>
+    </ul>
+  </div>
+</div>
+
+<h2 id="outcomes">Outcomes and goals</h2>
+<div class="tabs" id="tabs"></div>
+<div id="panels"></div>
+
+<h2 id="sequence">Sequence</h2>
+<div class="timeline">
+  <div class="step now"><b>1. Contain</b>Hotfix shared reports (no review). Lock down the staff math-file tool now, via an emergency security sign-off.</div>
+  <div class="step now"><b>2. Prove (no review)</b>Exportable audit log, built to also record permission changes and staff access. Use it to look back at who opened math files.</div>
+  <div class="step later"><b>3. Isolate (security review)</b>Studio-scoped RBAC in one batched submission, including a staff support role with no standing math-file access. Start the review early so it overlaps the build.</div>
+  <div class="step later"><b>4. Harden</b>Cross-tenant and staff-access tests, plus review findings, from the reserve.</div>
+</div>
+
+<h2 id="curve1" class="curve">Curveball: staff tool opens every studio's math files</h2>
+<div class="card">
+  <p style="margin-top:0" contenteditable="true">A security check found an internal support tool that lets staff open every studio's math files. We close it inside the existing outcomes instead of adding a new workstream.</p>
+  <table>
+    <thead><tr><th>Outcome</th><th>How it handles the staff tool</th><th>Review</th></tr></thead>
+    <tbody contenteditable="true">
+      <tr><td>1. Contain</td><td>Disable the tool, or limit it to a named few, today. Remove math-file access from it.</td><td>Emergency sign-off, not the standard review. Confirm with security.</td></tr>
+      <tr><td>3. Prove</td><td>Build the audit log first. It records staff access from now on. Use it and any server logs to check who has already opened math files.</td><td>None</td></tr>
+      <tr><td>2. Isolate</td><td>Add a staff support role to the RBAC design with no standing math-file access. Access only through a time-boxed, logged request tied to a ticket, with studio consent where possible.</td><td>Security review, in the same batch</td></tr>
+      <tr><td>4. Harden</td><td>Add a test that no internal tool reads math models without an approved, logged grant.</td><td>None</td></tr>
+    </tbody>
+  </table>
+  <p class="sub" style="margin-bottom:0" contenteditable="true">Studio communication: decide who is told and when once the look-back shows whether anyone accessed the files. Check contracts and regulatory obligations, as math models are usually certified assets.</p>
+</div>
+
+<h2 id="curve2" class="curve">Curveball 2: operator wants cross-studio benchmarks, studios object</h2>
+<div class="card">
+  <p style="margin-top:0" contenteditable="true"><b>Approach:</b> ask the operator what they actually want to decide, then deliver it at the aggregation level. We aggregate performance by game type, theme and similar groupings across all studios, and never expose an individual studio.</p>
+  <ul contenteditable="true">
+    <li><b>Ask first:</b> the operator's real decisions are often narrower than "cross-studio benchmarks".</li>
+    <li><b>Aggregate only:</b> benchmarks by game type, theme and similar groupings, with no studio or title names.</li>
+    <li><b>No IP:</b> math models and raw player data stay out of scope.</li>
+    <li><b>Studios hear it first:</b> present the aggregate design to the objecting studios before the operator sees terms.</li>
+  </ul>
+  <p class="sub" style="margin-bottom:0" contenteditable="true">Fit with the plan: it is a new access path, so it needs the security review, and all 16 pts are allocated. Position it as a follow-on once the four outcomes are done.</p>
+</div>
+
+<h2 id="capacity">Capacity planner</h2>
+<div class="capacity">
+  <div class="bar" id="bar"></div>
+  <div class="total" id="total"></div>
+  <div class="controls" id="controls"></div>
+</div>
+
+<h2 id="checklist">Success checklist</h2>
+<div class="capacity">
+  <div class="progress"><div id="progress"></div></div>
+  <div id="checks"></div>
+</div>
+
+<h2 id="risks">Assumptions and risks</h2>
+<table>
+  <thead><tr><th>Item</th><th>Impact</th><th>Mitigation</th></tr></thead>
+  <tbody contenteditable="true">
+    <tr><td>Hotfix cost (2 pts) is an assumption, not in the brief.</td><td>Eats the reserve.</td><td>Validate with engineering before commit.</td></tr>
+    <tr><td>Staff tool lockdown (1 pt) is an assumption, and the reserve is down to 2 pts.</td><td>Little room for review findings.</td><td>Validate with engineering. Cut leak-test scope before cutting the lockdown.</td></tr>
+    <tr><td>Staff tool may already have been used on math files.</td><td>Studio trust and possible contract or regulatory duties.</td><td>Look back with the audit log and server logs, then decide on studio communication.</td></tr>
+    <tr><td>Lockdown blocks support staff from legitimate work.</td><td>Slower support.</td><td>Time-boxed, ticketed access requests as an interim path.</td></tr>
+    <tr><td>Operator benchmarks are read as exposing individual studios.</td><td>Studio trust, and the operator relationship.</td><td>Aggregate only, agreed with studios first, and delivered after the four outcomes.</td></tr>
+    <tr><td>Review findings force RBAC rework.</td><td>Delay and reserve use.</td><td>Early design review and one batched submission.</td></tr>
+    <tr><td>RBAC rollout disrupts studio workflows.</td><td>Studio frustration.</td><td>Pilot with 1-2 studios first.</td></tr>
+    <tr><td>Studios value self-serve audit less than expected.</td><td>New studio does not sign.</td><td>Validate with the new studio now.</td></tr>
+  </tbody>
+</table>
+
+<h2 id="decisions">Decision log</h2>
+<table>
+  <thead><tr><th>#</th><th>Decision</th><th>Why and trade-off</th><th>Outcome</th></tr></thead>
+  <tbody contenteditable="true">
+    <tr><td>1</td><td>Deliver as four outcomes: Contain, Isolate, Prove, Harden, within 16 pts (3 / 8 / 3 / 2).</td><td>Fixes the leak now and the root cause after. Uses the full capacity, so there is little slack.</td><td><span class="dtag">All</span></td></tr>
+    <tr><td>2</td><td>Ship the report hotfix and the audit log without waiting on security review. Build the audit log before the RBAC rebuild.</td><td>Answers the 2 studio complaints and the new studio's audit demand first, and makes the RBAC rollout itself auditable. Neither is an access change.</td><td><span class="dtag">Contain, Prove</span></td></tr>
+    <tr><td>3</td><td>Batch every access change into one security review submission, and start the review early.</td><td>Any access change needs review, so one batch avoids repeated delays. Review findings draw on the 2 pt Harden reserve.</td><td><span class="dtag">Isolate</span></td></tr>
+    <tr><td>4</td><td><span class="dtag curve">Curveball 1</span> Lock the staff support tool out of studios' math files now, via an emergency sign-off. Then replace it with a staff role that has no standing access and uses time-boxed, ticketed, studio-approved requests.</td><td>Insider access to the crown jewels is the highest-risk gap, and there was no audit log to show whether it was used. Absorbed inside the existing outcomes. Costs about 1 pt, which shrinks the reserve to 2. Look back with the audit log before deciding studio communication.</td><td><span class="dtag">Contain, Isolate, Prove, Harden</span></td></tr>
+    <tr><td>5</td><td><span class="dtag curve">Curveball 2</span> Ask the operator what they actually want to decide, then deliver aggregated benchmarks by game type, theme and similar groupings across all studios, never individual studios.</td><td>Meets the operator's need without breaking the IP promise studios rank in their top 3. Add a minimum-studios threshold and studio opt-in. It is a new access path with no spare capacity, so it follows the four outcomes.</td><td><span class="dtag">Isolate, Prove</span></td></tr>
+    <tr><td>6</td><td>Do not release studio-identifiable data to any operator, and treat math models as the most protected asset.</td><td>Protects the reason studios choose us. It is the walk-away position in the operator negotiation, and it shapes the staff-tool fix.</td><td><span class="dtag">All</span></td></tr>
+  </tbody>
+</table>
+
+<p class="hint">Click any text to edit it. Targets, owners and the capacity sliders are placeholders to refine in the workshop.</p>
+</div>
+  </div>
+</div>
+
+<script>
+const outcomes = [
+  { id: "contain", name: "1. Contain", pts: 3, review: false,
+    statement: "Studios never see a competitor's name or data, in any report or internal tool.",
+    who: "Studio users, support staff",
+    goals: ["Zero cross-studio exposure incidents", "Zero studio complaints about leaks (from 2)", "Staff tool no longer opens math files (emergency sign-off)"],
+    measure: "Incidents and complaints per month" },
+  { id: "control", name: "2. Isolate", pts: 8, review: true,
+    statement: "Studio admins control who on their team sees what, with least privilege.",
+    who: "Studio admins",
+    goals: ["Manual per-account permission edits down by X%", "Accounts on broad roles: 0", "Isolation enforced at the data layer", "Support staff have no standing access to math files"],
+    measure: "Share of accounts on scoped roles" },
+  { id: "prove", name: "3. Prove", pts: 3, review: false,
+    statement: "A prospective studio can verify access controls on its own, without waiting on us.",
+    who: "New top studio, sales",
+    goals: ["New studio signs", "Audit request turnaround drops from days to minutes", "Permission changes are logged from day one", "We can say who has opened each studio's math files"],
+    measure: "Time to fulfil an audit request" },
+  { id: "verify", name: "4. Harden", pts: 2, review: false,
+    statement: "We can show that isolation holds, on every release.",
+    who: "Security, operations",
+    goals: ["Cross-tenant tests pass on every release", "No internal tool reads math models without an approved, logged grant", "All review findings resolved"],
+    measure: "Test pass rate and open findings" },
+  { id: "differentiate", name: "5. IP trust as a differentiator", pts: 0, review: false,
+    statement: "IP protection becomes a reason studios choose us.",
+    who: "Sales, studios",
+    goals: ["IP protection cited as a win reason in deals", "Studio trust score on IP protection rises"],
+    measure: "Win-reason tagging and trust survey" }
+];
+
+const checks = [
+  "Report hotfix live, zero competitor names in shared reports",
+  "Staff tool no longer opens math files",
+  "Audit log exportable and delivered to the new studio",
+  "Audit log records permission changes",
+  "Look-back done on past staff access to math files",
+  "RBAC design submitted to security review as one batch",
+  "Security review passed",
+  "All accounts migrated to studio-scoped roles",
+  "Cross-tenant leak tests running on every release",
+  "New studio signed"
+];
+
+const tabs = document.getElementById("tabs");
+const panels = document.getElementById("panels");
+outcomes.forEach((o, i) => {
+  const t = document.createElement("button");
+  t.className = "tab" + (i === 0 ? " active" : "");
+  t.textContent = o.name;
+  t.onclick = () => show(o.id);
+  t.dataset.id = o.id;
+  tabs.appendChild(t);
+
+  const p = document.createElement("div");
+  p.className = "panel card" + (i === 0 ? " active" : "");
+  p.dataset.id = o.id;
+  p.innerHTML = `
+    <div class="row"><div class="label">Outcome</div><div contenteditable="true"><b>${o.statement}</b></div></div>
+    <div class="row"><div class="label">Who benefits</div><div contenteditable="true">${o.who}</div></div>
+    <div class="row"><div class="label">Goals</div><ul contenteditable="true">${o.goals.map(g => `<li>${g}</li>`).join("")}</ul></div>
+    <div class="row"><div class="label">Measure</div><div contenteditable="true">${o.measure}</div></div>
+    <div class="row">
+      <span class="pill">${o.pts} pts</span>
+      <span class="pill ${o.review ? "rev" : "ok"}">${o.review ? "Security review required" : "No security review"}</span>
+    </div>`;
+  panels.appendChild(p);
+});
+
+function show(id) {
+  document.querySelectorAll(".tab").forEach(t => t.classList.toggle("active", t.dataset.id === id));
+  document.querySelectorAll(".panel").forEach(p => p.classList.toggle("active", p.dataset.id === id));
+}
+
+const CAPACITY = 16;
+const colors = ["#2e7d4f", "#2d6a9f", "#1b3a57", "#b7791f"];
+const planned = outcomes.filter(o => o.pts > 0).map((o, i) => ({ id: o.id, name: o.name, pts: o.pts, color: colors[i] }));
+const controls = document.getElementById("controls");
+planned.forEach((item, i) => {
+  const d = document.createElement("div");
+  d.innerHTML = `<span class="story-link" data-story="${i}">${item.name}</span>: <b id="v${i}">${item.pts}</b> pts
+    <input type="range" min="0" max="12" value="${item.pts}" data-i="${i}">`;
+  controls.appendChild(d);
+});
+controls.addEventListener("input", e => {
+  const i = e.target.dataset.i;
+  if (i === undefined) return;
+  planned[i].pts = +e.target.value;
+  document.getElementById("v" + i).textContent = e.target.value;
+  render();
+});
+
+function render() {
+  const sum = planned.reduce((a, b) => a + b.pts, 0);
+  document.getElementById("bar").innerHTML = planned
+    .map((p, i) => `<div data-story="${i}" style="width:${p.pts / Math.max(sum, CAPACITY) * 100}%;background:${p.color}" title="${p.name}: click for stories">${p.pts || ""}</div>`)
+    .join("");
+  const t = document.getElementById("total");
+  t.textContent = `${sum} of ${CAPACITY} pts planned (${CAPACITY - sum} remaining)`;
+  t.classList.toggle("over", sum > CAPACITY);
+  document.getElementById("capChip").textContent = `${sum} / ${CAPACITY} pts`;
+  document.getElementById("capChip").classList.toggle("over", sum > CAPACITY);
+  document.getElementById("sideCap").textContent = `${sum} / ${CAPACITY} pts`;
+}
+render();
+
+const sections = [["top", "Overview"], ["why", "Why now"], ["outcomes", "Outcomes"], ["sequence", "Sequence"], ["curve1", "Curveball 1", 1], ["curve2", "Curveball 2", 1], ["capacity", "Capacity"], ["checklist", "Checklist"], ["risks", "Risks"], ["decisions", "Decision log"]];
+document.getElementById("nav").innerHTML = sections.map(s => `<a class="nav-item${s[2] ? " curve" : ""}" href="#${s[0]}" data-sec="${s[0]}">${s[1]}<span class="dot"></span></a>`).join("");
+const spy = new IntersectionObserver(es => es.forEach(e => {
+  if (e.isIntersecting) document.querySelectorAll(".nav-item").forEach(a => a.classList.toggle("active", a.dataset.sec === e.target.id));
+}), { rootMargin: "-20% 0px -70% 0px" });
+sections.forEach(s => spy.observe(document.getElementById(s[0])));
+const stories = {
+  contain: [
+    ["Filter every shared report by studio so a studio only sees its own rows", 1],
+    ["Remove competitor names from report views and exports", 1],
+    ["Lock the staff support tool out of math files (emergency sign-off)", 1]
+  ],
+  control: [
+    ["Define the studio tenant model and studio-scoped roles (studio admin, analyst, operator)", 2],
+    ["Enforce studio isolation at the data layer, not only in the UI", 3],
+    ["Replace manual per-account permissions with role templates and groups", 1],
+    ["Add a staff support role with ticketed, time-boxed, studio-approved math-file access", 1],
+    ["Migrate accounts and pilot with 1-2 studios", 1]
+  ],
+  prove: [
+    ["Record every report, data and math-model access, plus permission changes", 1],
+    ["Exportable audit log with search and filters", 1],
+    ["Studio-facing audit report, and a look-back on past staff access to math files", 1]
+  ],
+  verify: [
+    ["Cross-tenant leak test suite running on every release", 1],
+    ["Test that no internal tool reads math models without a logged grant, and fix review findings", 1]
+  ]
+};
+const modalBg = document.createElement("div");
+modalBg.className = "modal-bg";
+document.body.appendChild(modalBg);
+function openStories(i) {
+  const p = planned[i], o = outcomes.find(x => x.id === p.id), list = stories[p.id] || [];
+  const total = list.reduce((a, s) => a + s[1], 0);
+  modalBg.innerHTML = `<div class="modal">
+    <h3>${p.name}: ${p.pts} pts</h3>
+    <div style="color:var(--muted);font-size:14px">${o.statement}</div>
+    <table><thead><tr><th>Example story</th><th style="text-align:right">Pts</th></tr></thead>
+    <tbody contenteditable="true">${list.map(s => `<tr><td>${s[0]}</td><td class="pts">${s[1]}</td></tr>`).join("")}</tbody></table>
+    <div class="foot"><span>Stories total <b>${total}</b> of ${p.pts} pts${o.review ? " · needs the security review" : " · no security review"}</span><button data-close>Close</button></div></div>`;
+  modalBg.classList.add("show");
+}
+modalBg.addEventListener("click", e => { if (e.target === modalBg || e.target.hasAttribute("data-close")) modalBg.classList.remove("show"); });
+document.addEventListener("keydown", e => { if (e.key === "Escape") modalBg.classList.remove("show"); });
+document.addEventListener("click", e => {
+  const t = e.target.closest("[data-story]");
+  if (t) openStories(+t.dataset.story);
+});
+
+const checksEl = document.getElementById("checks");
+checks.forEach((c, i) => {
+  const l = document.createElement("label");
+  l.className = "check";
+  l.innerHTML = `<input type="checkbox" data-c="${i}"><span contenteditable="true">${c}</span>`;
+  checksEl.appendChild(l);
+});
+checksEl.addEventListener("change", () => {
+  const all = checksEl.querySelectorAll("input");
+  const done = [...all].filter(x => x.checked).length;
+  document.getElementById("progress").style.width = (done / all.length * 100) + "%";
+});
+</script>
 </body>
 </html>
